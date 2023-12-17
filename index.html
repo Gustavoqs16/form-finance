@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Input de Range com Valor Atual</title>
+  
+  <link rel="stylesheet" href="styles.css" />
+  <script type="text/javascript" src="script.js"></script>
+</head>
+
+<body>
+  <div id="container">
+    <label for="rangeInput"><b>1.</b> Quer um empréstimo pessoal de quanto?</label>
+    <div class="input-range grey-div">
+      <div id="range-container" style="display: none;">
+        <div id="value-bubble">0</div>
+        <input type="range" id="range-input" min="1000" max="20000" value="0" oninput="updateRange(this.value)">
+      </div>
+
+      <div class="container-range">
+        <div class="circle"></div>
+        <div id="tooltip" class="tooltip"></div>
+        <div id="step1"></div>
+        <div id="step2"></div>
+        <div id="step3"></div>
+        <div id="step4"></div>
+      </div>
+      
+      <div class="text-info">
+        <span id="min-value">R$ 1000</span>
+        <span id="min-value">R$ 20000</span>
+      </div>
+    </div>
+    <div class="input-range">
+      <label for="rangeInput"><b>2.</b> Quer pagar em quantas parcelas?</label>
+      <div class="cards">
+        <div id="card-36x" class="card" onclick="selectCard('36x')">
+          <span>36X</span>
+          <h3 id="title-3x">R$ 66.67</h3>
+        </div>
+        <div id="card-48x" class="card" onclick="selectCard('48x')">
+          <span>48X</span>
+          <h3 id="title-6x">R$ 33.33</h3>
+        </div>
+        <div id="card-60x" class="card" onclick="selectCard('60x')">
+          <span>60X</span>
+          <h3 id="title-9x">R$ 22.22</h3>
+        </div>
+        <div id="card-72x" class="card" onclick="selectCard('72x')">
+          <span>72X</span>
+          <h3 id="title-12x">R$ 16.67</h3>
+        </div>
+        <div id="card-84x" class="card" onclick="selectCard('84x')">
+          <span>84X</span>
+          <h3 id="title-12x">R$ 16.67</h3>
+        </div>
+      </div>
+    </div>
+    <span class="result-financial">Sua parcela mensal será de <b id="final-value">397,17</b></span>
+    <button>Solicite agora</button>
+  </div>
+</body>
+
+
+<script>
+  const rangeInput = document.getElementById('range-input');
+    const value3x = document.getElementById('title-3x');
+    const value6x = document.getElementById('title-6x');
+    const value9x = document.getElementById('title-9x');
+    const value12x = document.getElementById('title-12x');
+    const value84x = document.getElementById('title-12x');
+    const valueBubble = document.getElementById('value-bubble');
+    const tooltip = document.getElementById('tooltip');
+    const step1 = document.getElementById('step1');
+    const step2 = document.getElementById('step2');
+    const step3 = document.getElementById('step3');
+    const step4 = document.getElementById('step4');
+    var finalValue = document.getElementById('final-value');
+    var cardSelected;
+
+    const steps = [step1, step2, step3, step4];
+    const stepValues = [5000, 10000, 15000, 20000];
+
+    var value_;
+
+    tooltip.textContent = `R$ 1000`;
+
+    function selectCard(cardId) {
+      const cards = document.querySelectorAll('.card');
+      cards.forEach(card => card.classList.remove('selected'));
+
+      const selectedCard = document.getElementById(`card-${cardId}`);
+      selectedCard.classList.add('selected');
+
+      cardSelected = cardId
+      updateValueFinal(cardId)
+    }
+
+    function updateValueFinal(cardId) {
+      let newValue = value_ ? value_ : 1000
+      let calc;
+      switch (cardId) {
+        case '36x':
+          calc = newValue / 36
+          break;
+        case '48x':
+          calc = newValue / 48
+          break;
+        case '60x':
+          calc= newValue / 60
+          break;
+        case '72x':
+          calc = newValue / 72
+          break;
+        case '84x':
+          calc = newValue / 84
+          break;
+        default:
+          break;
+      }
+
+      finalValue.textContent = `R$ ${calc.toFixed(2)}`
+    }
+
+    const container = document.querySelector('.container-range');
+    const circle = document.querySelector('.circle');
+
+    let isDragging = false;
+
+    circle.addEventListener('mousedown', (e) => {
+      isDragging = true;
+      tooltip.style.left = circle.style.left;
+      tooltip.style.top = '-40px';
+      circle.style.cursor = 'grabbing';
+      tooltip.style.display = 'block';
+    });
+
+    document.addEventListener('mousemove', (e) => {
+      updateCirclePosition(e)
+    });
+
+    document.addEventListener('mouseup', () => {
+      isDragging = false;
+      circle.style.cursor = 'grab';
+    });
+
+    function findStepIndex(circlePosition, containerWidth, numSteps) {
+      const stepWidth = containerWidth / numSteps;
+      return Math.floor(circlePosition / stepWidth);
+    }
+
+    function updateCirclePosition(e) {
+      if (!isDragging) return;
+
+      const containerRect = container.getBoundingClientRect();
+      const circleHalfWidth = circle.clientWidth / 2;
+
+      let leftPosition = e.clientX - containerRect.left - circleHalfWidth;
+
+      // Garante que o círculo permaneça dentro dos limites do contêiner
+      leftPosition = Math.max(0, Math.min(leftPosition, container.clientWidth - circle.clientWidth));
+
+      const stepIndex = findStepIndex(leftPosition, container.clientWidth, steps.length);
+      const endOfStep = (stepIndex + 1) * (container.clientWidth / steps.length) - circleHalfWidth;
+
+      const value = leftPosition === 0 ? 1000 : stepValues[stepIndex];
+
+      // Verifica se o círculo está no início e ajusta o valor para o mínimo
+
+      circle.style.left = leftPosition + 'px';
+      tooltip.style.left = leftPosition + 'px';
+
+      // Se for a última etapa, atualize a posição para o final da etapa
+      if (stepIndex === steps.length - 1) {
+        circle.style.left = endOfStep + 'px';
+        tooltip.style.left = endOfStep + 'px';
+      }
+
+      steps.forEach((step, index) => {
+        if (index <= stepIndex) {
+          step.style.backgroundColor = '#048a05'; // Cor do círculo
+        } else if (value < 5000) {
+          step1.style.backgroundColor = 'transparent'; // Cor cinza
+        } else {
+          step.style.backgroundColor = 'transparent'; // Cor cinza
+        }
+      });
+
+      // Atualiza o range com o valor correspondente
+      updateRange(value);
+    }
+
+    function updateRange(value) {
+      const maxRangeValue = 20000;
+      let value3xInput = (value / 36).toFixed(2);
+      let value6xInput = (value / 48).toFixed(2);
+      let value9xInput = (value / 60).toFixed(2);
+      let value12xInput = (value / 72).toFixed(2);
+      let value84xInput = (value / 84).toFixed(2);
+
+
+      value3x.textContent = `R$ ${value3xInput}`;
+      value6x.textContent = `R$ ${value6xInput}`;
+      value9x.textContent = `R$ ${value9xInput}`;
+      value12x.textContent = `R$ ${value12xInput}`;
+      value84x.textContent = `R$ ${value84xInput}`;
+
+      const percent = (value / maxRangeValue) * 100;
+      valueBubble.textContent = `R$ ${value}`;
+      valueBubble.style.left = `calc(${percent}% - 15px)`;
+      tooltip.textContent = `R$ ${value}`;
+      value_ = value;
+
+      if(cardSelected)updateValueFinal(cardSelected)
+    }
+</script>
+
+</html>
